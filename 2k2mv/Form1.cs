@@ -12,6 +12,7 @@ using System.IO;
 using System.Xml.Linq;
 using System.Web.Script.Serialization;
 using Microsoft.Win32;
+using System.Text.RegularExpressions;
 
 namespace _2k2mv
 {
@@ -450,7 +451,7 @@ namespace _2k2mv
                             if (selectById(terrains, terrain_num, "damage") != "0") { mv_flags += 256; } //0x0100: Damage floor
                             if (selectById(terrains, terrain_num, "boat_pass") == "F") { mv_flags += 512; } //0x0200: Impassable by boat
                             if (selectById(terrains, terrain_num, "ship_pass") == "F") { mv_flags += 1024; } //0x0400: Impassable by ship
-                            if (selectById(terrains, terrain_num, "airship_land") == "F") { mv_flags += 2048; } //0x0800: Airship cannot land
+                            if (selectById(terrains, terrain_num, "airship_land") == "F") { mv_flags += 2048; } //0x0800: Airship cannot land                            
 
                             if (n >= 18) //normal tiles
                             {
@@ -462,7 +463,7 @@ namespace _2k2mv
                                 for (int i = 0; i <= 47; i++)
                                 {
                                     tileID = 2816 + (n - 6) * 48 + i;
-                                    tileset.flags[tileID] = mv_flags;
+                                    tileset.flags[tileID] = mv_flags;                                      
                                 }
                                 for (int i = 0; i <= 11; i++)//make a copy of autotiles as normal tiles in D sheet
                                 {
@@ -543,6 +544,11 @@ namespace _2k2mv
                             tileset.flags[tileID] = mv_flags;
 
                             mv_flags = 0;
+                        }
+
+                        for(int i = 0; i <= 15; i++) //set various passability to last 16 transparent tiles in D tilesheet for use with "star" flagged tiles
+                        {
+                            tileset.flags[752 + i] = i;
                         }
 
                         if (!File.Exists(Path.Combine(inputPath, "ChipSet", chipset_name + ".png"))) //check for missing chipsets and copy them to the input directory
@@ -685,6 +691,11 @@ namespace _2k2mv
                 MessageBox.Show("RPG_RT.emt not found. Run LCF2XML in the input directory.");
                 return;
             }
+            if (!File.Exists(Path.Combine(outputPath, "data", "Tilesets.json")))
+            {
+                MessageBox.Show("Tilesets.json in output folder not found. Convert tileset data first.");
+                return;
+            }
             Task.Factory.StartNew(() =>
             {
                 label_mconv_status.Invoke(new Action(() => label_mconv_status.Text = "Working..."));
@@ -709,7 +720,6 @@ namespace _2k2mv
                 string mapFileName2k = "";
                 string nodeJsonData = "";
                 string mapJsonData = "";
-                JavaScriptSerializer js = new JavaScriptSerializer();
                 List<int> lowerLayer;
                 List<int> upperLayer;
                 List<int> autoTileLayer;
@@ -731,6 +741,13 @@ namespace _2k2mv
                 {
                     mapNames = js.Deserialize<List<MapName>>(File.ReadAllText(Path.Combine(outputPath, "MapNames.json")));
                 }
+
+                List<Tileset> tilesets;
+                Tileset tileset;
+                int tile;
+                tilesets = js.Deserialize<List<Tileset>>(File.ReadAllText(Path.Combine(outputPath, "data", "Tilesets.json")));
+                List<int> subtiles = new List<int> { 33, 43, 45, 34, 20, 36, 21, 22 };//list of passable subtiles for "square" passability autotiles
+                int flags = 0;
 
 
                 foreach (var mapInfo in mapNodesXML.Elements("MapInfo"))
@@ -841,14 +858,40 @@ namespace _2k2mv
                         upperLayer = new List<int>(new int[upper_layer.Count]);
                         lowerLayer = new List<int>(new int[lower_layer.Count]);
                         autoTileLayer = new List<int>(new int[lower_layer.Count]);
+                        
+                        tileset = tilesets[map.tilesetId];
 
                         for (int n = 0; n <= lower_layer.Count - 1; n++)
                         {
-                            lowerLayer[n] = convertTileId(lower_layer[n]);
-                            if (lowerLayer[n] >= 2048)//split autotiles and normal lower layer tiles
+                            tile = convertTileId(lower_layer[n]);
+                            if (tileset.flags.Length > 1) { flags = tileset.flags[tile]; } else { flags = 0; }
+
+                            if (tile >= 2048)//split autotiles and normal lower layer tiles
                             {
-                                autoTileLayer[n] = lowerLayer[n];
-                                lowerLayer[n] = 0;
+                                autoTileLayer[n] = tile;
+                                if ((flags & 16) == 16)//for star autotiles put passable transparent tile in third layer
+                                {
+                                    if((flags & 15) == 15)//"square" passability autotiles are 4-way impassable
+                                    {
+                                        if (subtiles.Contains((tile - 2816) % 48))//only subtiles from list are made passable
+                                        {
+                                            lowerLayer[n] = 752;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        lowerLayer[n] = 752 + (flags & 15);
+                                    }
+                                    
+                                }
+                            }
+                            else
+                            {
+                                lowerLayer[n] = tile;
+                                if ((flags & 16) == 16 && (flags & 15) != 15)//for star lower layer tiles put passable transparent tile in first layer
+                                {
+                                    autoTileLayer[n] = 752 + (flags & 15);
+                                }
                             }
                             map.data[n] = autoTileLayer[n];//autotiles go in first layer (ground layer)
                             map.data[n + map.width * map.height * 2] = lowerLayer[n]; //normal lower layer tiles go in third layer (first design layer)
@@ -856,7 +899,20 @@ namespace _2k2mv
 
                         for (int n = 0; n <= upper_layer.Count - 1; n++)
                         {
-                            upperLayer[n] = convertTileId(upper_layer[n]);
+                            tile = convertTileId(upper_layer[n]);
+                            upperLayer[n] = tile;
+                            if (tileset.flags.Length > 1) { flags = tileset.flags[tile]; } else { flags = 0; }
+                            if ((flags & 16) == 16 && (flags & 15) != 15)//for star upper layer tiles put passable transparent tile in unoccupied layer
+                            {
+                                if(lowerLayer[n] == 0)
+                                {
+                                    lowerLayer[n] = 752 + (flags & 15);
+                                }
+                                else
+                                {
+                                    autoTileLayer[n] = 752 + (flags & 15);
+                                }
+                            }
                             map.data[n + map.width * map.height * 3] = upperLayer[n];//upper layer tiles go in fourth layer (second design layer)
                         }
                         //End of map tile data processing
@@ -902,7 +958,7 @@ namespace _2k2mv
                     nodeJsonData = js.Serialize(mapTreeNodes).Replace("[null,{", "[\nnull,\n{").Replace("},{", "},\n{").Replace("}]", "}\n]").Replace("\\u0027", "'");
                     File.WriteAllText(Path.Combine(outputPath, "data", "MapInfos.json"), nodeJsonData);
                 }
-
+                
                 label_mconv_status.Invoke(new Action(() => label_mconv_status.Text = "Done"));
                 label_mconv_status.Invoke(new Action(() => label_mconv_status.ForeColor = System.Drawing.Color.Green));
                 enableButtons();
@@ -1010,5 +1066,7 @@ namespace _2k2mv
             updateOnlyMapDataCheckBox.Invoke(new Action(() => updateOnlyMapDataCheckBox.Enabled = false));
             return;
         }
+
+
     }
 }
