@@ -684,6 +684,12 @@ namespace _2k2mv
             public string displayName { get; set; }
         }
 
+        public class MapOverrideInfo
+        {
+            public int id { get; set; }
+            public int[] data { get; set; }
+        }
+
         private void button_mconv_Click(object sender, EventArgs e)
         {
             if (!File.Exists(Path.Combine(inputPath, "RPG_RT.emt")))
@@ -859,7 +865,8 @@ namespace _2k2mv
                         lowerLayer = new List<int>(new int[lower_layer.Count]);
                         autoTileLayer = new List<int>(new int[lower_layer.Count]);
                         
-                        tileset = tilesets[map.tilesetId];
+                        //tileset = tilesets[map.tilesetId];
+                        tileset = tilesets.Where(x => x.id == map.tilesetId).SingleOrDefault();
 
                         for (int n = 0; n <= lower_layer.Count - 1; n++)
                         {
@@ -873,7 +880,7 @@ namespace _2k2mv
                                 {
                                     if((flags & 15) == 15)//"square" passability autotiles are 4-way impassable
                                     {
-                                        if (subtiles.Contains((tile - 2816) % 48))//only subtiles from list are made passable
+                                        if (subtiles.Contains((tile - 2048) % 48))//only subtiles from list are made passable
                                         {
                                             lowerLayer[n] = 752;
                                         }
@@ -1048,6 +1055,7 @@ namespace _2k2mv
             button_iconv.Invoke(new Action(() => button_iconv.Enabled = true));
             button_dconv.Invoke(new Action(() => button_dconv.Enabled = true));
             button_mconv.Invoke(new Action(() => button_mconv.Enabled = true));
+            button_mvconv.Invoke(new Action(() => button_mvconv.Enabled = true));
             button_inputDir.Invoke(new Action(() => button_inputDir.Enabled = true));
             button_outputDir.Invoke(new Action(() => button_outputDir.Enabled = true));
             copyMissingImagesCheckBox.Invoke(new Action(() => copyMissingImagesCheckBox.Enabled = true));
@@ -1060,6 +1068,7 @@ namespace _2k2mv
             button_iconv.Invoke(new Action(() => button_iconv.Enabled = false));
             button_dconv.Invoke(new Action(() => button_dconv.Enabled = false));
             button_mconv.Invoke(new Action(() => button_mconv.Enabled = false));
+            button_mvconv.Invoke(new Action(() => button_mvconv.Enabled = false));
             button_inputDir.Invoke(new Action(() => button_inputDir.Enabled = false));
             button_outputDir.Invoke(new Action(() => button_outputDir.Enabled = false));
             copyMissingImagesCheckBox.Invoke(new Action(() => copyMissingImagesCheckBox.Enabled = false));
@@ -1067,6 +1076,135 @@ namespace _2k2mv
             return;
         }
 
+        private void button_mvconv_Click(object sender, EventArgs e)
+        {
+            if (!Directory.Exists(Path.Combine(inputPath, "data")) || Directory.GetFiles(Path.Combine(inputPath, "data"), "Map*.json").Length == 0)
+            {
+                MessageBox.Show("No MV map files found in /data folder in the input folder.");
+                return;
+            }
+            Task.Factory.StartNew(() =>
+            {
+                label_mvconv_status.Invoke(new Action(() => label_mvconv_status.Text = "Working..."));
+                label_mvconv_status.Invoke(new Action(() => label_mvconv_status.ForeColor = System.Drawing.Color.Red));
+                disableButtons();
 
+                Map map1;
+                Map map2;
+                string mapJsonData1;
+                int eventsPos1;
+                string eventsTemp1;
+                string mapJsonData2;
+                int eventsPos2;
+                string eventsTemp2;
+                string mapFileName;
+                int mapId;
+                string mapPath2;
+                bool mapSave;
+                MapOverrideInfo mapOverrideInfo;
+                List<MapOverrideInfo> mapOverrideInfos = new List<MapOverrideInfo>();
+                string mapOverridePath = Path.Combine(outputPath, "MapOverrideInfo.json");
+                int mapSize;
+                int overrideIndex = 0;
+                bool overrideExists;
+                bool overrideSave = false;
+
+                if(File.Exists(mapOverridePath))
+                {
+                    mapOverrideInfos = js.Deserialize<List<MapOverrideInfo>>(File.ReadAllText(mapOverridePath));
+                }
+
+                foreach (var mapPath1 in EnumerateFilesSafely(Path.Combine(inputPath, "data"), "Map*.json", System.IO.SearchOption.AllDirectories, null))
+                {
+                    mapFileName = Path.GetFileNameWithoutExtension(mapPath1);
+                    try { mapId = int.Parse(mapFileName.Substring(3)); } catch (FormatException) { mapId = 0; }
+                    mapPath2 = Path.Combine(outputPath, "data", mapFileName + ".json");
+                    if (mapId > 0 && File.Exists(mapPath2))
+                    {
+                        map1 = new Map();
+                        map2 = new Map();
+
+                        mapJsonData1 = File.ReadAllText(mapPath1).Replace("encounterList\":[]", "encounterList\":\"[]\"");
+                        eventsPos1 = mapJsonData1.IndexOf("\n\"events\":[");
+                        eventsTemp1 = mapJsonData1.Substring(eventsPos1);
+                        mapJsonData1 = mapJsonData1.Substring(0, eventsPos1) + "\n\"events\":\"[]\"}";
+                        map1 = js.Deserialize<Map>(mapJsonData1);
+
+                        mapJsonData2 = File.ReadAllText(mapPath2).Replace("encounterList\":[]", "encounterList\":\"[]\"");
+                        eventsPos2 = mapJsonData2.IndexOf("\n\"events\":[");
+                        eventsTemp2 = mapJsonData2.Substring(eventsPos2);
+                        mapJsonData2 = mapJsonData2.Substring(0, eventsPos2) + "\n\"events\":\"[]\"}";
+                        map2 = js.Deserialize<Map>(mapJsonData2);
+
+                        if (map2.width == map1.width && map2.height == map1.height && mapJsonData2 != mapJsonData1)
+                        {
+                            mapSave = true;
+                            overrideSave = true;
+                            mapSize = map1.data.Length;
+                            var query = mapOverrideInfos.Where(x => x.id == mapId);
+                            if(query.Count() > 0)
+                            {
+                                mapOverrideInfo = query.FirstOrDefault();
+                                overrideExists = true;
+                                overrideIndex = mapOverrideInfos.IndexOf(mapOverrideInfo);                                
+                            }
+                            else
+                            {
+                                mapOverrideInfo = new MapOverrideInfo();
+                                mapOverrideInfo.data = new int[mapSize];
+                                mapOverrideInfo.id = mapId;
+                                overrideExists = false;                                
+                            }  
+                            for (int i = 0; i < mapSize; i++)
+                            {
+                                if(map2.data[i] != map1.data[i])
+                                {
+                                    mapOverrideInfo.data[i] = map1.data[i];
+                                }
+                                else
+                                {
+                                    if (mapOverrideInfo.data[i] <= 0)
+                                    {
+                                        mapOverrideInfo.data[i] = -1;
+                                    }                                        
+                                }
+                            }
+                            if (overrideExists)
+                            {
+                                mapOverrideInfos[overrideIndex] = mapOverrideInfo;
+                            }
+                            else
+                            {
+                                mapOverrideInfos.Add(mapOverrideInfo);
+                                mapOverrideInfos.Sort((x, y) => x.id.CompareTo(y.id));
+                            }
+
+                            map2.data = map1.data;
+                        }
+                        else
+                        {
+                            mapSave = false;
+                        }
+                        
+                        if (mapSave)
+                        {
+                            mapJsonData2 = js.Serialize(map2);
+                            mapJsonData2 = mapJsonData2.Replace("{\"autoplayBgm", "{\n\"autoplayBgm").Replace("encounterList\":\"[]\"", "encounterList\":[]").Replace(",\"data", ",\n\"data")
+                                .Replace("\"events\":\"[]\"}", eventsTemp2).Replace("\\u0027", "'");
+                            File.WriteAllText(mapPath2, mapJsonData2);
+                        }
+                    }                    
+                }
+                
+                if (overrideSave)
+                {
+                    File.WriteAllText(mapOverridePath, js.Serialize(mapOverrideInfos));
+                }
+                
+                label_mvconv_status.Invoke(new Action(() => label_mvconv_status.Text = "Done"));
+                label_mvconv_status.Invoke(new Action(() => label_mvconv_status.ForeColor = System.Drawing.Color.Green));
+                enableButtons();
+            });
+        }
     }
 }

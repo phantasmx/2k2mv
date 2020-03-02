@@ -48,8 +48,13 @@
             this.groupBox_dconv = new System.Windows.Forms.GroupBox();
             this.updateOnlyMapDataCheckBox = new System.Windows.Forms.CheckBox();
             this.groupBox_mconv = new System.Windows.Forms.GroupBox();
+            this.label_mvconv = new System.Windows.Forms.Label();
+            this.button_mvconv = new System.Windows.Forms.Button();
+            this.label_mvconv_status = new System.Windows.Forms.Label();
+            this.groupBox_mvconv = new System.Windows.Forms.GroupBox();
             this.groupBox_dconv.SuspendLayout();
             this.groupBox_mconv.SuspendLayout();
+            this.groupBox_mvconv.SuspendLayout();
             this.SuspendLayout();
             // 
             // button_inputDir
@@ -241,11 +246,51 @@
             this.groupBox_mconv.TabIndex = 19;
             this.groupBox_mconv.TabStop = false;
             // 
+            // label_mvconv
+            // 
+            this.label_mvconv.AutoSize = true;
+            this.label_mvconv.Location = new System.Drawing.Point(57, 24);
+            this.label_mvconv.Name = "label_mvconv";
+            this.label_mvconv.Size = new System.Drawing.Size(105, 13);
+            this.label_mvconv.TabIndex = 20;
+            this.label_mvconv.Text = "Transfer MV tile data";
+            // 
+            // button_mvconv
+            // 
+            this.button_mvconv.Location = new System.Drawing.Point(197, 19);
+            this.button_mvconv.Name = "button_mvconv";
+            this.button_mvconv.Size = new System.Drawing.Size(75, 23);
+            this.button_mvconv.TabIndex = 21;
+            this.button_mvconv.Text = "Transfer";
+            this.button_mvconv.UseVisualStyleBackColor = true;
+            this.button_mvconv.Click += new System.EventHandler(this.button_mvconv_Click);
+            // 
+            // label_mvconv_status
+            // 
+            this.label_mvconv_status.AutoSize = true;
+            this.label_mvconv_status.Location = new System.Drawing.Point(301, 23);
+            this.label_mvconv_status.Name = "label_mvconv_status";
+            this.label_mvconv_status.Size = new System.Drawing.Size(78, 13);
+            this.label_mvconv_status.TabIndex = 22;
+            this.label_mvconv_status.Text = "Waiting to start";
+            // 
+            // groupBox_mvconv
+            // 
+            this.groupBox_mvconv.Controls.Add(this.button_mvconv);
+            this.groupBox_mvconv.Controls.Add(this.label_mvconv_status);
+            this.groupBox_mvconv.Controls.Add(this.label_mvconv);
+            this.groupBox_mvconv.Location = new System.Drawing.Point(507, 254);
+            this.groupBox_mvconv.Name = "groupBox_mvconv";
+            this.groupBox_mvconv.Size = new System.Drawing.Size(465, 100);
+            this.groupBox_mvconv.TabIndex = 23;
+            this.groupBox_mvconv.TabStop = false;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(984, 462);
+            this.Controls.Add(this.groupBox_mvconv);
             this.Controls.Add(this.label_inputDir);
             this.Controls.Add(this.groupBox_mconv);
             this.Controls.Add(this.button_inputDir);
@@ -263,6 +308,8 @@
             this.groupBox_dconv.PerformLayout();
             this.groupBox_mconv.ResumeLayout(false);
             this.groupBox_mconv.PerformLayout();
+            this.groupBox_mvconv.ResumeLayout(false);
+            this.groupBox_mvconv.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -289,6 +336,10 @@
         private System.Windows.Forms.GroupBox groupBox_dconv;
         private System.Windows.Forms.CheckBox updateOnlyMapDataCheckBox;
         private System.Windows.Forms.GroupBox groupBox_mconv;
+        private System.Windows.Forms.Label label_mvconv;
+        private System.Windows.Forms.Button button_mvconv;
+        private System.Windows.Forms.Label label_mvconv_status;
+        private System.Windows.Forms.GroupBox groupBox_mvconv;
     }
 }
 
