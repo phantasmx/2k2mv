@@ -564,6 +564,7 @@ namespace _2k2mv
                             }
                             missingChipsetImages += "\n";
                         }
+                        
                     }
 
                     tilesets.Add(tileset);
@@ -690,6 +691,12 @@ namespace _2k2mv
             public int[] data { get; set; }
         }
 
+        public class SubstitutionList
+        {
+            public int id { get; set; }
+            public int[] tileIndex { get; set; }
+        }
+
         private void button_mconv_Click(object sender, EventArgs e)
         {
             if (!File.Exists(Path.Combine(inputPath, "RPG_RT.emt")))
@@ -736,6 +743,7 @@ namespace _2k2mv
                 string mapJsonDataTemp;
                 string eventsTemp = "\n\"events\":[\n]\n}";
                 int eventsPos;
+                int EventPosEnd;
                 List<MapTreeNode> mapTreeNodes = new List<MapTreeNode>();
                 mapTreeNodes.Add(null);
                 int trimLength;
@@ -755,6 +763,25 @@ namespace _2k2mv
                 List<int> subtiles = new List<int> { 33, 43, 45, 34, 20, 36, 21, 22 };//list of passable subtiles for "square" passability autotiles
                 int flags = 0;
 
+                List<int> autotilesSubstitutionList = new List<int> { };//list of problematic autotiles to substitute with D tiles
+                List <SubstitutionList> substitutionList = new List<SubstitutionList>();
+                bool substitutionListExists = File.Exists(Path.Combine(outputPath, "Autotiles Substitution List.json"));
+                if (substitutionListExists)
+                {
+                    substitutionList = js.Deserialize<List<SubstitutionList>>(File.ReadAllText(Path.Combine(outputPath, "Autotiles Substitution List.json")));
+                    foreach (var element in substitutionList)
+                    {
+                        foreach (int index in element.tileIndex)
+                        {
+                            autotilesSubstitutionList.Add(element.id * 12 + index);
+                        }
+                    }
+                }
+                
+                List<int> subtilesSubstitutionList = new List<int> { 47, 32, 15, 34, 20, 36, 16, 0, 24, 40, 28, 38 };//list of subtiles to substitute with D tiles
+                int subtile;
+                int tileIndex;
+                int subtileIndex;
 
                 foreach (var mapInfo in mapNodesXML.Elements("MapInfo"))
                 {
@@ -865,8 +892,8 @@ namespace _2k2mv
                         lowerLayer = new List<int>(new int[lower_layer.Count]);
                         autoTileLayer = new List<int>(new int[lower_layer.Count]);
                         
-                        //tileset = tilesets[map.tilesetId];
-                        tileset = tilesets.Where(x => x.id == map.tilesetId).SingleOrDefault();
+                        tileset = tilesets[map.tilesetId];
+                        //tileset = tilesets.Where(x => x.id == map.tilesetId).SingleOrDefault();
 
                         for (int n = 0; n <= lower_layer.Count - 1; n++)
                         {
@@ -890,6 +917,16 @@ namespace _2k2mv
                                         lowerLayer[n] = 752 + (flags & 15);
                                     }
                                     
+                                }
+                                tileIndex = (tile - 2816) / 48;
+                                subtile = (tile - 2816) % 48;
+                                if (tile >= 2816 && autotilesSubstitutionList.Contains(map.tilesetId * 12 + tileIndex))//substitute problematic autotiles with D tiles
+                                {
+                                    if (subtilesSubstitutionList.Contains(subtile))
+                                    {
+                                        subtileIndex = subtilesSubstitutionList.IndexOf(subtile);
+                                        autoTileLayer[n] = subtileIndex + 5 * ((subtileIndex * 2 + 1) / 6) + 3 * ((tileIndex + 1) / 2) + 29 * (tileIndex / 2) + 1 + 512;                                 
+                                    }
                                 }
                             }
                             else
@@ -938,9 +975,24 @@ namespace _2k2mv
                             map.bgm = new BGX { };
                             map.bgs = new BGX { };
                             mapJsonDataTemp = File.ReadAllText(Path.Combine(outputPath, "data", mapFileName + ".json")).Replace("encounterList\":[]", "encounterList\":\"[]\"");
-                            eventsPos = mapJsonDataTemp.IndexOf("\n\"events\":[");
-                            eventsTemp = mapJsonDataTemp.Substring(eventsPos);
-                            mapJsonDataTemp = mapJsonDataTemp.Substring(0, eventsPos) + "\n\"events\":\"[]\"}";
+                            if (mapJsonDataTemp.IndexOf("events\":[\n]") > 0)
+                            {
+                                mapJsonDataTemp = mapJsonDataTemp.Replace("events\":[\n]", "events\":\"[]\"");
+                                eventsTemp = "\n\"events\":[\n]";
+                            }
+                            else
+                            {
+                                eventsPos = mapJsonDataTemp.IndexOf("events\":[") + 9;
+                                EventPosEnd = mapJsonDataTemp.LastIndexOf("\"y\":");
+                                EventPosEnd = mapJsonDataTemp.IndexOf("]", EventPosEnd);
+                                eventsTemp = "\"events\":" + mapJsonDataTemp.Substring(eventsPos - 1, EventPosEnd - eventsPos + 2);
+                                mapJsonDataTemp = mapJsonDataTemp.Substring(0, eventsPos - 1) + "\"[]\"" + mapJsonDataTemp.Substring(EventPosEnd + 1);
+                            }
+
+                            //eventsPos = mapJsonDataTemp.IndexOf("\n\"events\":[");
+                            //EventPosEnd = mapJsonDataTemp.LastIndexOf("\"y\":");
+                            //eventsTemp = mapJsonDataTemp.Substring(eventsPos);
+                            //mapJsonDataTemp = mapJsonDataTemp.Substring(0, eventsPos) + "\n\"events\":\"[]\"}";
                             mapTemp = js.Deserialize<Map>(mapJsonDataTemp);
                             mapTemp.data = map.data;
                             if (getNamesFromFile)
@@ -952,11 +1004,11 @@ namespace _2k2mv
 
                         mapJsonData = js.Serialize(map);
                         mapJsonData = mapJsonData.Replace("{\"autoplayBgm", "{\n\"autoplayBgm").Replace("encounterList\":\"[]\"", "encounterList\":[]").Replace(",\"data", ",\n\"data")
-                            .Replace("\"events\":\"[]\"}", eventsTemp).Replace("\\u0027", "'");
+                            .Replace("\"events\":\"[]\"", eventsTemp).Replace("\\u0027", "'").TrimEnd('}') + "\n}";
                         File.WriteAllText(Path.Combine(outputPath, "data", mapFileName + ".json"), mapJsonData);
-
+                        if (mapJsonData.IndexOf("autoplayBgm", mapJsonData.IndexOf("\"events\":")) > 0) { MessageBox.Show(mapTreeNode.id.ToString()); }
                         mapJsonData = "";
-                        eventsTemp = "\n\"events\":[\n]\n}";
+                        eventsTemp = "\n\"events\":[\n]";
                     }
                 }
 
