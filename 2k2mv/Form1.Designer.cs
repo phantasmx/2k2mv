@@ -52,9 +52,20 @@
             this.button_mvconv = new System.Windows.Forms.Button();
             this.label_mvconv_status = new System.Windows.Forms.Label();
             this.groupBox_mvconv = new System.Windows.Forms.GroupBox();
+            this.label_atSubstitution = new System.Windows.Forms.Label();
+            this.button_atSubstitution = new System.Windows.Forms.Button();
+            this.button_mapNames = new System.Windows.Forms.Button();
+            this.label_mapNames_status = new System.Windows.Forms.Label();
+            this.label_mapNames = new System.Windows.Forms.Label();
+            this.label_atSubstitution_status = new System.Windows.Forms.Label();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.checkBox_atList = new System.Windows.Forms.CheckBox();
+            this.checkBox_mapNamesList = new System.Windows.Forms.CheckBox();
+            this.groupBox_iconv = new System.Windows.Forms.GroupBox();
             this.groupBox_dconv.SuspendLayout();
             this.groupBox_mconv.SuspendLayout();
             this.groupBox_mvconv.SuspendLayout();
+            this.groupBox_iconv.SuspendLayout();
             this.SuspendLayout();
             // 
             // button_inputDir
@@ -116,7 +127,7 @@
             // label_iconv_status
             // 
             this.label_iconv_status.AutoSize = true;
-            this.label_iconv_status.Location = new System.Drawing.Point(257, 218);
+            this.label_iconv_status.Location = new System.Drawing.Point(246, 24);
             this.label_iconv_status.Name = "label_iconv_status";
             this.label_iconv_status.Size = new System.Drawing.Size(78, 13);
             this.label_iconv_status.TabIndex = 10;
@@ -125,7 +136,7 @@
             // label_iconv
             // 
             this.label_iconv.AutoSize = true;
-            this.label_iconv.Location = new System.Drawing.Point(28, 218);
+            this.label_iconv.Location = new System.Drawing.Point(17, 24);
             this.label_iconv.Name = "label_iconv";
             this.label_iconv.Size = new System.Drawing.Size(115, 13);
             this.label_iconv.TabIndex = 9;
@@ -134,7 +145,7 @@
             // button_iconv
             // 
             this.button_iconv.Enabled = false;
-            this.button_iconv.Location = new System.Drawing.Point(158, 213);
+            this.button_iconv.Location = new System.Drawing.Point(147, 19);
             this.button_iconv.Name = "button_iconv";
             this.button_iconv.Size = new System.Drawing.Size(75, 23);
             this.button_iconv.TabIndex = 8;
@@ -236,20 +247,22 @@
             // 
             // groupBox_mconv
             // 
+            this.groupBox_mconv.Controls.Add(this.checkBox_mapNamesList);
+            this.groupBox_mconv.Controls.Add(this.checkBox_atList);
             this.groupBox_mconv.Controls.Add(this.button_mconv);
             this.groupBox_mconv.Controls.Add(this.updateOnlyMapDataCheckBox);
             this.groupBox_mconv.Controls.Add(this.label_mconv);
             this.groupBox_mconv.Controls.Add(this.label_mconv_status);
-            this.groupBox_mconv.Location = new System.Drawing.Point(13, 254);
+            this.groupBox_mconv.Location = new System.Drawing.Point(13, 314);
             this.groupBox_mconv.Name = "groupBox_mconv";
-            this.groupBox_mconv.Size = new System.Drawing.Size(464, 100);
+            this.groupBox_mconv.Size = new System.Drawing.Size(464, 136);
             this.groupBox_mconv.TabIndex = 19;
             this.groupBox_mconv.TabStop = false;
             // 
             // label_mvconv
             // 
             this.label_mvconv.AutoSize = true;
-            this.label_mvconv.Location = new System.Drawing.Point(57, 24);
+            this.label_mvconv.Location = new System.Drawing.Point(18, 24);
             this.label_mvconv.Name = "label_mvconv";
             this.label_mvconv.Size = new System.Drawing.Size(105, 13);
             this.label_mvconv.TabIndex = 20;
@@ -257,7 +270,8 @@
             // 
             // button_mvconv
             // 
-            this.button_mvconv.Location = new System.Drawing.Point(197, 19);
+            this.button_mvconv.Enabled = false;
+            this.button_mvconv.Location = new System.Drawing.Point(158, 19);
             this.button_mvconv.Name = "button_mvconv";
             this.button_mvconv.Size = new System.Drawing.Size(75, 23);
             this.button_mvconv.TabIndex = 21;
@@ -268,7 +282,7 @@
             // label_mvconv_status
             // 
             this.label_mvconv_status.AutoSize = true;
-            this.label_mvconv_status.Location = new System.Drawing.Point(301, 23);
+            this.label_mvconv_status.Location = new System.Drawing.Point(257, 24);
             this.label_mvconv_status.Name = "label_mvconv_status";
             this.label_mvconv_status.Size = new System.Drawing.Size(78, 13);
             this.label_mvconv_status.TabIndex = 22;
@@ -279,28 +293,125 @@
             this.groupBox_mvconv.Controls.Add(this.button_mvconv);
             this.groupBox_mvconv.Controls.Add(this.label_mvconv_status);
             this.groupBox_mvconv.Controls.Add(this.label_mvconv);
-            this.groupBox_mvconv.Location = new System.Drawing.Point(507, 254);
+            this.groupBox_mvconv.Location = new System.Drawing.Point(602, 314);
             this.groupBox_mvconv.Name = "groupBox_mvconv";
             this.groupBox_mvconv.Size = new System.Drawing.Size(465, 100);
             this.groupBox_mvconv.TabIndex = 23;
             this.groupBox_mvconv.TabStop = false;
             // 
+            // label_atSubstitution
+            // 
+            this.label_atSubstitution.AutoSize = true;
+            this.label_atSubstitution.Location = new System.Drawing.Point(618, 17);
+            this.label_atSubstitution.Name = "label_atSubstitution";
+            this.label_atSubstitution.Size = new System.Drawing.Size(119, 13);
+            this.label_atSubstitution.TabIndex = 25;
+            this.label_atSubstitution.Text = "Autotile Substitution List";
+            // 
+            // button_atSubstitution
+            // 
+            this.button_atSubstitution.Location = new System.Drawing.Point(758, 12);
+            this.button_atSubstitution.Name = "button_atSubstitution";
+            this.button_atSubstitution.Size = new System.Drawing.Size(75, 23);
+            this.button_atSubstitution.TabIndex = 24;
+            this.button_atSubstitution.Text = "Browse";
+            this.button_atSubstitution.UseVisualStyleBackColor = true;
+            this.button_atSubstitution.Click += new System.EventHandler(this.button_atSubstitution_Click);
+            // 
+            // button_mapNames
+            // 
+            this.button_mapNames.Location = new System.Drawing.Point(758, 53);
+            this.button_mapNames.Name = "button_mapNames";
+            this.button_mapNames.Size = new System.Drawing.Size(75, 23);
+            this.button_mapNames.TabIndex = 27;
+            this.button_mapNames.Text = "Browse";
+            this.button_mapNames.UseVisualStyleBackColor = true;
+            this.button_mapNames.Click += new System.EventHandler(this.button_mapNames_Click);
+            // 
+            // label_mapNames_status
+            // 
+            this.label_mapNames_status.AutoSize = true;
+            this.label_mapNames_status.Location = new System.Drawing.Point(857, 58);
+            this.label_mapNames_status.Name = "label_mapNames_status";
+            this.label_mapNames_status.Size = new System.Drawing.Size(43, 13);
+            this.label_mapNames_status.TabIndex = 29;
+            this.label_mapNames_status.Text = "Not Set";
+            // 
+            // label_mapNames
+            // 
+            this.label_mapNames.AutoSize = true;
+            this.label_mapNames.Location = new System.Drawing.Point(618, 58);
+            this.label_mapNames.Name = "label_mapNames";
+            this.label_mapNames.Size = new System.Drawing.Size(83, 13);
+            this.label_mapNames.TabIndex = 28;
+            this.label_mapNames.Text = "Map Names List";
+            // 
+            // label_atSubstitution_status
+            // 
+            this.label_atSubstitution_status.AutoSize = true;
+            this.label_atSubstitution_status.Location = new System.Drawing.Point(857, 17);
+            this.label_atSubstitution_status.Name = "label_atSubstitution_status";
+            this.label_atSubstitution_status.Size = new System.Drawing.Size(43, 13);
+            this.label_atSubstitution_status.TabIndex = 26;
+            this.label_atSubstitution_status.Text = "Not Set";
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.FileName = "openFileDialog1";
+            // 
+            // checkBox_atList
+            // 
+            this.checkBox_atList.AutoSize = true;
+            this.checkBox_atList.Location = new System.Drawing.Point(19, 83);
+            this.checkBox_atList.Name = "checkBox_atList";
+            this.checkBox_atList.Size = new System.Drawing.Size(160, 17);
+            this.checkBox_atList.TabIndex = 19;
+            this.checkBox_atList.Text = "Use Autotile Substitution List";
+            this.checkBox_atList.UseVisualStyleBackColor = true;
+            this.checkBox_atList.CheckedChanged += new System.EventHandler(this.checkBox_atList_CheckedChanged);
+            // 
+            // checkBox_mapNamesList
+            // 
+            this.checkBox_mapNamesList.AutoSize = true;
+            this.checkBox_mapNamesList.Location = new System.Drawing.Point(19, 106);
+            this.checkBox_mapNamesList.Name = "checkBox_mapNamesList";
+            this.checkBox_mapNamesList.Size = new System.Drawing.Size(124, 17);
+            this.checkBox_mapNamesList.TabIndex = 20;
+            this.checkBox_mapNamesList.Text = "Use Map Names List";
+            this.checkBox_mapNamesList.UseVisualStyleBackColor = true;
+            this.checkBox_mapNamesList.CheckedChanged += new System.EventHandler(this.checkBox_mapNamesList_CheckedChanged);
+            // 
+            // groupBox_iconv
+            // 
+            this.groupBox_iconv.Controls.Add(this.button_iconv);
+            this.groupBox_iconv.Controls.Add(this.label_iconv_status);
+            this.groupBox_iconv.Controls.Add(this.label_iconv);
+            this.groupBox_iconv.Location = new System.Drawing.Point(12, 208);
+            this.groupBox_iconv.Name = "groupBox_iconv";
+            this.groupBox_iconv.Size = new System.Drawing.Size(465, 100);
+            this.groupBox_iconv.TabIndex = 30;
+            this.groupBox_iconv.TabStop = false;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(984, 462);
+            this.ClientSize = new System.Drawing.Size(1184, 462);
+            this.Controls.Add(this.groupBox_iconv);
+            this.Controls.Add(this.label_atSubstitution);
+            this.Controls.Add(this.button_atSubstitution);
+            this.Controls.Add(this.button_mapNames);
+            this.Controls.Add(this.label_mapNames_status);
+            this.Controls.Add(this.label_mapNames);
+            this.Controls.Add(this.label_atSubstitution_status);
             this.Controls.Add(this.groupBox_mvconv);
             this.Controls.Add(this.label_inputDir);
             this.Controls.Add(this.groupBox_mconv);
             this.Controls.Add(this.button_inputDir);
             this.Controls.Add(this.button_outputDir);
-            this.Controls.Add(this.button_iconv);
             this.Controls.Add(this.groupBox_dconv);
-            this.Controls.Add(this.label_iconv);
             this.Controls.Add(this.label_outputDir_status);
             this.Controls.Add(this.label_outputDir);
-            this.Controls.Add(this.label_iconv_status);
             this.Controls.Add(this.label_inputDir_status);
             this.Name = "MainForm";
             this.Text = "2k2mv";
@@ -310,6 +421,8 @@
             this.groupBox_mconv.PerformLayout();
             this.groupBox_mvconv.ResumeLayout(false);
             this.groupBox_mvconv.PerformLayout();
+            this.groupBox_iconv.ResumeLayout(false);
+            this.groupBox_iconv.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -340,6 +453,16 @@
         private System.Windows.Forms.Button button_mvconv;
         private System.Windows.Forms.Label label_mvconv_status;
         private System.Windows.Forms.GroupBox groupBox_mvconv;
+        private System.Windows.Forms.Label label_atSubstitution;
+        private System.Windows.Forms.Button button_atSubstitution;
+        private System.Windows.Forms.Button button_mapNames;
+        private System.Windows.Forms.Label label_mapNames_status;
+        private System.Windows.Forms.Label label_mapNames;
+        private System.Windows.Forms.Label label_atSubstitution_status;
+        private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.CheckBox checkBox_mapNamesList;
+        private System.Windows.Forms.CheckBox checkBox_atList;
+        private System.Windows.Forms.GroupBox groupBox_iconv;
     }
 }
 

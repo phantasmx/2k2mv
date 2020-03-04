@@ -30,8 +30,12 @@ namespace _2k2mv
                 settings.inputPath = "";
                 settings.outputPath = "";
                 settings.rtpPath = "";
+                settings.autotileSubstitutionListPath = "";
+                settings.mapNamesPath = "";
                 settings.copyMissingImagesFromRTP = false;
                 settings.updateOnlyTileDataIfOutputMapExists = true;
+                settings.useAutotileSubstitutionList = false;
+                settings.useMapNamesList = false;
                 File.WriteAllText(iniPath, js.Serialize(settings).Replace(",", ",\n\t").Replace("{", "{\n\t").Replace("}", "\n}"));
             }
             if (settings.rtpPath == "")
@@ -59,14 +63,31 @@ namespace _2k2mv
                 button_iconv.Enabled = true;
                 button_dconv.Enabled = true;
                 button_mconv.Enabled = true;
+                button_mvconv.Enabled = true;
+            }
+            autotileSubstitutionListPath = settings.autotileSubstitutionListPath;
+            if (autotileSubstitutionListPath != "")
+            {
+                label_atSubstitution_status.Text = autotileSubstitutionListPath;
+                label_atSubstitution_status.ForeColor = System.Drawing.Color.Green;
+            }
+            mapNamesPath = settings.mapNamesPath;
+            if (mapNamesPath != "")
+            {
+                label_mapNames_status.Text = mapNamesPath;
+                label_mapNames_status.ForeColor = System.Drawing.Color.Green;
             }
             copyMissingImagesCheckBox.Checked = settings.copyMissingImagesFromRTP;
             updateOnlyMapDataCheckBox.Checked = settings.updateOnlyTileDataIfOutputMapExists;
+            checkBox_atList.Checked = settings.useAutotileSubstitutionList;
+            checkBox_mapNamesList.Checked = settings.useMapNamesList;
             js.MaxJsonLength = Int32.MaxValue;
         }
         string inputPath;
         string outputPath;
         string rtpPath;
+        string autotileSubstitutionListPath;
+        string mapNamesPath;
         Settings settings = new Settings();
         string iniPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "2k2mv.ini");
         JavaScriptSerializer js = new JavaScriptSerializer();
@@ -321,6 +342,7 @@ namespace _2k2mv
                     button_iconv.Enabled = true;
                     button_dconv.Enabled = true;
                     button_mconv.Enabled = true;
+                    button_mvconv.Enabled = true;
                 }
                 label_dconv_status.Text = "Waiting to start";
                 label_dconv_status.ForeColor = System.Drawing.Color.Black;
@@ -328,6 +350,8 @@ namespace _2k2mv
                 label_iconv_status.ForeColor = System.Drawing.Color.Black;
                 label_mconv_status.Text = "Waiting to start";
                 label_mconv_status.ForeColor = System.Drawing.Color.Black;
+                label_mvconv_status.Text = "Waiting to start";
+                label_mvconv_status.ForeColor = System.Drawing.Color.Black;
             }
         }
 
@@ -354,6 +378,7 @@ namespace _2k2mv
                     button_iconv.Enabled = true;
                     button_dconv.Enabled = true;
                     button_mconv.Enabled = true;
+                    button_mvconv.Enabled = true;
                 }
                 label_dconv_status.Text = "Waiting to start";
                 label_dconv_status.ForeColor = System.Drawing.Color.Black;
@@ -361,6 +386,8 @@ namespace _2k2mv
                 label_iconv_status.ForeColor = System.Drawing.Color.Black;
                 label_mconv_status.Text = "Waiting to start";
                 label_mconv_status.ForeColor = System.Drawing.Color.Black;
+                label_mvconv_status.Text = "Waiting to start";
+                label_mvconv_status.ForeColor = System.Drawing.Color.Black;
             }                
         }
 
@@ -617,8 +644,12 @@ namespace _2k2mv
             public string inputPath { get; set; }
             public string outputPath { get; set; }
             public string rtpPath { get; set; }
+            public string autotileSubstitutionListPath { get; set; }
+            public string mapNamesPath { get; set; }
             public bool copyMissingImagesFromRTP { get; set; }
             public bool updateOnlyTileDataIfOutputMapExists { get; set; }
+            public bool useAutotileSubstitutionList { get; set; }
+            public bool useMapNamesList { get; set; }
         }
 
         public class Tileset
@@ -750,10 +781,10 @@ namespace _2k2mv
 
                 List<MapName> mapNames = new List<MapName>();
                 MapName mapName;
-                bool getNamesFromFile = File.Exists(Path.Combine(outputPath, "MapNames.json"));
+                bool getNamesFromFile = File.Exists(mapNamesPath) && settings.useMapNamesList;
                 if (getNamesFromFile)
                 {
-                    mapNames = js.Deserialize<List<MapName>>(File.ReadAllText(Path.Combine(outputPath, "MapNames.json")));
+                    mapNames = js.Deserialize<List<MapName>>(File.ReadAllText(mapNamesPath));
                 }
 
                 List<Tileset> tilesets;
@@ -765,10 +796,10 @@ namespace _2k2mv
 
                 List<int> autotilesSubstitutionList = new List<int> { };//list of problematic autotiles to substitute with D tiles
                 List <SubstitutionList> substitutionList = new List<SubstitutionList>();
-                bool substitutionListExists = File.Exists(Path.Combine(outputPath, "Autotiles Substitution List.json"));
-                if (substitutionListExists)
+                bool useAutotileSubstitutionList = File.Exists(autotileSubstitutionListPath) && settings.useAutotileSubstitutionList;
+                if (useAutotileSubstitutionList)
                 {
-                    substitutionList = js.Deserialize<List<SubstitutionList>>(File.ReadAllText(Path.Combine(outputPath, "Autotiles Substitution List.json")));
+                    substitutionList = js.Deserialize<List<SubstitutionList>>(File.ReadAllText(autotileSubstitutionListPath));
                     foreach (var element in substitutionList)
                     {
                         foreach (int index in element.tileIndex)
@@ -892,8 +923,8 @@ namespace _2k2mv
                         lowerLayer = new List<int>(new int[lower_layer.Count]);
                         autoTileLayer = new List<int>(new int[lower_layer.Count]);
                         
-                        tileset = tilesets[map.tilesetId];
-                        //tileset = tilesets.Where(x => x.id == map.tilesetId).SingleOrDefault();
+                        //tileset = tilesets[map.tilesetId];
+                        tileset = tilesets.Where(x => (x != null) && (x.id == map.tilesetId)).SingleOrDefault();
 
                         for (int n = 0; n <= lower_layer.Count - 1; n++)
                         {
@@ -985,14 +1016,10 @@ namespace _2k2mv
                                 eventsPos = mapJsonDataTemp.IndexOf("events\":[") + 9;
                                 EventPosEnd = mapJsonDataTemp.LastIndexOf("\"y\":");
                                 EventPosEnd = mapJsonDataTemp.IndexOf("]", EventPosEnd);
-                                eventsTemp = "\"events\":" + mapJsonDataTemp.Substring(eventsPos - 1, EventPosEnd - eventsPos + 2);
+                                eventsTemp = "\n\"events\":" + mapJsonDataTemp.Substring(eventsPos - 1, EventPosEnd - eventsPos + 2);
                                 mapJsonDataTemp = mapJsonDataTemp.Substring(0, eventsPos - 1) + "\"[]\"" + mapJsonDataTemp.Substring(EventPosEnd + 1);
                             }
 
-                            //eventsPos = mapJsonDataTemp.IndexOf("\n\"events\":[");
-                            //EventPosEnd = mapJsonDataTemp.LastIndexOf("\"y\":");
-                            //eventsTemp = mapJsonDataTemp.Substring(eventsPos);
-                            //mapJsonDataTemp = mapJsonDataTemp.Substring(0, eventsPos) + "\n\"events\":\"[]\"}";
                             mapTemp = js.Deserialize<Map>(mapJsonDataTemp);
                             mapTemp.data = map.data;
                             if (getNamesFromFile)
@@ -1110,8 +1137,12 @@ namespace _2k2mv
             button_mvconv.Invoke(new Action(() => button_mvconv.Enabled = true));
             button_inputDir.Invoke(new Action(() => button_inputDir.Enabled = true));
             button_outputDir.Invoke(new Action(() => button_outputDir.Enabled = true));
+            button_atSubstitution.Invoke(new Action(() => button_atSubstitution.Enabled = true));
+            button_mapNames.Invoke(new Action(() => button_mapNames.Enabled = true));
             copyMissingImagesCheckBox.Invoke(new Action(() => copyMissingImagesCheckBox.Enabled = true));
             updateOnlyMapDataCheckBox.Invoke(new Action(() => updateOnlyMapDataCheckBox.Enabled = true));
+            checkBox_atList.Invoke(new Action(() => checkBox_atList.Enabled = true));
+            checkBox_mapNamesList.Invoke(new Action(() => checkBox_mapNamesList.Enabled = true));
             return;
         }
 
@@ -1123,8 +1154,12 @@ namespace _2k2mv
             button_mvconv.Invoke(new Action(() => button_mvconv.Enabled = false));
             button_inputDir.Invoke(new Action(() => button_inputDir.Enabled = false));
             button_outputDir.Invoke(new Action(() => button_outputDir.Enabled = false));
+            button_atSubstitution.Invoke(new Action(() => button_atSubstitution.Enabled = false));
+            button_mapNames.Invoke(new Action(() => button_mapNames.Enabled = false));
             copyMissingImagesCheckBox.Invoke(new Action(() => copyMissingImagesCheckBox.Enabled = false));
             updateOnlyMapDataCheckBox.Invoke(new Action(() => updateOnlyMapDataCheckBox.Enabled = false));
+            checkBox_atList.Invoke(new Action(() => checkBox_atList.Enabled = false));
+            checkBox_mapNamesList.Invoke(new Action(() => checkBox_mapNamesList.Enabled = false));
             return;
         }
 
@@ -1145,9 +1180,11 @@ namespace _2k2mv
                 Map map2;
                 string mapJsonData1;
                 int eventsPos1;
+                int EventPosEnd1;
                 string eventsTemp1;
                 string mapJsonData2;
                 int eventsPos2;
+                int EventPosEnd2;
                 string eventsTemp2;
                 string mapFileName;
                 int mapId;
@@ -1177,15 +1214,36 @@ namespace _2k2mv
                         map2 = new Map();
 
                         mapJsonData1 = File.ReadAllText(mapPath1).Replace("encounterList\":[]", "encounterList\":\"[]\"");
-                        eventsPos1 = mapJsonData1.IndexOf("\n\"events\":[");
-                        eventsTemp1 = mapJsonData1.Substring(eventsPos1);
-                        mapJsonData1 = mapJsonData1.Substring(0, eventsPos1) + "\n\"events\":\"[]\"}";
+                        if (mapJsonData1.IndexOf("events\":[\n]") > 0)
+                        {
+                            mapJsonData1 = mapJsonData1.Replace("events\":[\n]", "events\":\"[]\"");
+                            eventsTemp1 = "\n\"events\":[\n]";
+                        }
+                        else
+                        {
+                            eventsPos1 = mapJsonData1.IndexOf("events\":[") + 9;
+                            EventPosEnd1 = mapJsonData1.LastIndexOf("\"y\":");
+                            EventPosEnd1 = mapJsonData1.IndexOf("]", EventPosEnd1);
+                            eventsTemp1 = "\n\"events\":" + mapJsonData1.Substring(eventsPos1 - 1, EventPosEnd1 - eventsPos1 + 2);
+                            mapJsonData1 = mapJsonData1.Substring(0, eventsPos1 - 1) + "\"[]\"" + mapJsonData1.Substring(EventPosEnd1 + 1);
+                        }
                         map1 = js.Deserialize<Map>(mapJsonData1);
 
+
                         mapJsonData2 = File.ReadAllText(mapPath2).Replace("encounterList\":[]", "encounterList\":\"[]\"");
-                        eventsPos2 = mapJsonData2.IndexOf("\n\"events\":[");
-                        eventsTemp2 = mapJsonData2.Substring(eventsPos2);
-                        mapJsonData2 = mapJsonData2.Substring(0, eventsPos2) + "\n\"events\":\"[]\"}";
+                        if (mapJsonData2.IndexOf("events\":[\n]") > 0)
+                        {
+                            mapJsonData2 = mapJsonData2.Replace("events\":[\n]", "events\":\"[]\"");
+                            eventsTemp2 = "\n\"events\":[\n]";
+                        }
+                        else
+                        {
+                            eventsPos2 = mapJsonData2.IndexOf("events\":[") + 9;
+                            EventPosEnd2 = mapJsonData2.LastIndexOf("\"y\":");
+                            EventPosEnd2 = mapJsonData2.IndexOf("]", EventPosEnd2);
+                            eventsTemp2 = "\n\"events\":" + mapJsonData2.Substring(eventsPos2 - 1, EventPosEnd2 - eventsPos2 + 2);
+                            mapJsonData2 = mapJsonData2.Substring(0, eventsPos2 - 1) + "\"[]\"" + mapJsonData2.Substring(EventPosEnd2 + 1);
+                        }
                         map2 = js.Deserialize<Map>(mapJsonData2);
 
                         if (map2.width == map1.width && map2.height == map1.height && mapJsonData2 != mapJsonData1)
@@ -1241,8 +1299,10 @@ namespace _2k2mv
                         if (mapSave)
                         {
                             mapJsonData2 = js.Serialize(map2);
+
                             mapJsonData2 = mapJsonData2.Replace("{\"autoplayBgm", "{\n\"autoplayBgm").Replace("encounterList\":\"[]\"", "encounterList\":[]").Replace(",\"data", ",\n\"data")
-                                .Replace("\"events\":\"[]\"}", eventsTemp2).Replace("\\u0027", "'");
+                            .Replace("\"events\":\"[]\"", eventsTemp2).Replace("\\u0027", "'").TrimEnd('}') + "\n}";
+
                             File.WriteAllText(mapPath2, mapJsonData2);
                         }
                     }                    
@@ -1257,6 +1317,66 @@ namespace _2k2mv
                 label_mvconv_status.Invoke(new Action(() => label_mvconv_status.ForeColor = System.Drawing.Color.Green));
                 enableButtons();
             });
+        }
+
+        private void button_atSubstitution_Click(object sender, EventArgs e)
+        {
+            if (autotileSubstitutionListPath == "")
+            {
+                openFileDialog1.FileName = outputPath;
+            }
+            else
+            {
+                openFileDialog1.FileName = autotileSubstitutionListPath;
+            }
+
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                autotileSubstitutionListPath = openFileDialog1.FileName;
+                label_atSubstitution_status.Text = autotileSubstitutionListPath;
+                label_atSubstitution_status.ForeColor = System.Drawing.Color.Green;
+                settings.autotileSubstitutionListPath = autotileSubstitutionListPath;
+                File.WriteAllText(iniPath, js.Serialize(settings).Replace(",", ",\n\t").Replace("{", "{\n\t").Replace("}", "\n}"));
+
+                label_mconv_status.Text = "Waiting to start";
+                label_mconv_status.ForeColor = System.Drawing.Color.Black;
+            }
+        }
+
+        private void button_mapNames_Click(object sender, EventArgs e)
+        {
+            if (mapNamesPath == "")
+            {
+                openFileDialog1.FileName = outputPath;
+            }
+            else
+            {
+                openFileDialog1.FileName = mapNamesPath;
+            }
+
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                mapNamesPath = openFileDialog1.FileName;
+                label_mapNames_status.Text = mapNamesPath;
+                label_mapNames_status.ForeColor = System.Drawing.Color.Green;
+                settings.mapNamesPath = mapNamesPath;
+                File.WriteAllText(iniPath, js.Serialize(settings).Replace(",", ",\n\t").Replace("{", "{\n\t").Replace("}", "\n}"));
+
+                label_mconv_status.Text = "Waiting to start";
+                label_mconv_status.ForeColor = System.Drawing.Color.Black;
+            }
+        }
+
+        private void checkBox_atList_CheckedChanged(object sender, EventArgs e)
+        {
+            settings.useAutotileSubstitutionList = checkBox_atList.Checked;
+            File.WriteAllText(iniPath, js.Serialize(settings).Replace(",", ",\n\t").Replace("{", "{\n\t").Replace("}", "\n}"));
+        }
+
+        private void checkBox_mapNamesList_CheckedChanged(object sender, EventArgs e)
+        {
+            settings.useMapNamesList = checkBox_mapNamesList.Checked;
+            File.WriteAllText(iniPath, js.Serialize(settings).Replace(",", ",\n\t").Replace("{", "{\n\t").Replace("}", "\n}"));
         }
     }
 }
