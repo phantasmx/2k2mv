@@ -125,17 +125,17 @@ Also converts parallax backgrounds from /Panorama directory in the input directo
 For maps to display correctly, tileset images and data must be converted first.
 
 
-If Map Names List is specified, it will be used for map names in the map tree and map display names in the maps.
+If *Map Names List** is specified and **"Use Map Names List" checkbox** is checked, it will be used for map names in the map tree and map display names in the maps.
 
 
-If Autotile Substitution List is specified, it will be used to substitute specific subtiles of listed autotiles with their normal equivalents from D tilesheet.
+If **Autotile Substitution List** is specified and **"Use Autotile Substitution List" checkbox** is checked, it will be used to substitute specific subtiles of listed autotiles with their normal equivalents from D tilesheet.
 
 
 The structure of Map Names List and Autotile Substitution List .json files is detailed in the end of this Readme.
 
 
 
-### "Update only tile data in existing maps and do not overwrite MapInfos.json" Checkbox:
+#### "Update only tile data in existing maps and do not overwrite MapInfos.json" checkbox:
 
 If checked, it will update only tile data in the already existing maps in the output directory, leaving all other data(like events) intact.
 
