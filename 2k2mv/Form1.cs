@@ -436,12 +436,19 @@ namespace _2k2mv
                 List<Tileset> tilesets = new List<Tileset>();
                 tilesets.Add(null);
 
+                List<Tileset> squareflagList = new List<Tileset>();
+                int mv_square = 0;
+
                 string missingChipsetImages = "";
 
                 foreach (var chipset in chipsets.Elements("Chipset"))
                 {
                     Tileset tileset = new Tileset();
                     tileset.id = int.Parse(chipset.Attribute("id").Value.TrimStart(new Char[] { '0' }));
+
+                    Tileset squareflags = new Tileset();
+                    squareflags.id = tileset.id;
+
                     tileset.name = chipset.Element("name").Value;
                     tileset.note = "";
                     tileset.mode = 1;
@@ -452,6 +459,9 @@ namespace _2k2mv
                         tileset.tilesetNames = new string[] { "", "", "", "", "", "", "", "", "" };
                         tileset.flags = new int[1];
                         tileset.flags[0] = 16;
+
+                        squareflags.flags = new int[1];
+                        squareflags.flags[0] = 16;
                     }
                     else
                     {
@@ -459,6 +469,9 @@ namespace _2k2mv
 
                         tileset.flags = new int[3392]; //reserve tile IDs up to A2's 12th autotile
                         tileset.flags[0] = 16; //set first blank tile
+
+                        squareflags.flags = new int[3392];
+                        squareflags.flags[0] = 16;
 
                         passable_data_lower = chipset.Element("passable_data_lower").Value.Split(' ').ToList().Select(s => int.Parse(s)).ToList();
                         passable_data_upper = chipset.Element("passable_data_upper").Value.Split(' ').ToList().Select(s => int.Parse(s)).ToList();
@@ -478,24 +491,29 @@ namespace _2k2mv
                             if (selectById(terrains, terrain_num, "damage") != "0") { mv_flags += 256; } //0x0100: Damage floor
                             if (selectById(terrains, terrain_num, "boat_pass") == "F") { mv_flags += 512; } //0x0200: Impassable by boat
                             if (selectById(terrains, terrain_num, "ship_pass") == "F") { mv_flags += 1024; } //0x0400: Impassable by ship
-                            if (selectById(terrains, terrain_num, "airship_land") == "F") { mv_flags += 2048; } //0x0800: Airship cannot land                            
+                            if (selectById(terrains, terrain_num, "airship_land") == "F") { mv_flags += 2048; } //0x0800: Airship cannot land   
+
+                            if ((rm2k_flags & 32) != 0) { mv_square = 32; } else { mv_square = 0; } //0x0020: Square flag
 
                             if (n >= 18) //normal tiles
                             {
                                 tileID = (int)(n - 18 + 2 * Math.Floor(((double)n - 17.5) / 6) + 1);
                                 tileset.flags[tileID] = mv_flags;
+                                squareflags.flags[tileID] = mv_square;
                             }
                             else if (n >= 6) //static autotiles
                             {
                                 for (int i = 0; i <= 47; i++)
                                 {
                                     tileID = 2816 + (n - 6) * 48 + i;
-                                    tileset.flags[tileID] = mv_flags;                                      
+                                    tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                 }
                                 for (int i = 0; i <= 11; i++)//make a copy of autotiles as normal tiles in D sheet
                                 {
                                     tileID = (int)(i + 5 * Math.Floor(((double)i + 0.5) / 3) + 3 * Math.Ceiling(((double)n - 6) / 2) + 29 * Math.Floor(((double)n - 6) / 2) + 1 + 512);
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                 }
                             }
                             else if (n == 5) //third waterfall
@@ -504,6 +522,7 @@ namespace _2k2mv
                                 {
                                     tileID = 2672 + i;
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                 }
                             }
                             else if (n == 4) //second waterfall
@@ -512,6 +531,7 @@ namespace _2k2mv
                                 {
                                     tileID = 2384 + i;
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                 }
                             }
                             else if (n == 3) //first waterfall
@@ -520,6 +540,7 @@ namespace _2k2mv
                                 {
                                     tileID = 2288 + i;
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                 }
                             }
                             else if (n == 2) //third animated autotile - deep water
@@ -528,10 +549,13 @@ namespace _2k2mv
                                 {
                                     tileID = 2096 + i;
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                     tileID = 2432 + i;
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                     tileID = 2528 + i;
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                 }
                             }
                             else if (n == 1) //second animated autotile
@@ -540,6 +564,7 @@ namespace _2k2mv
                                 {
                                     tileID = 2240 + i;
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                 }
                             }
                             else //first animated autotile
@@ -548,6 +573,7 @@ namespace _2k2mv
                                 {
                                     tileID = 2048 + i;
                                     tileset.flags[tileID] = mv_flags;
+                                    squareflags.flags[tileID] = mv_square;
                                 }
                             }
 
@@ -595,9 +621,11 @@ namespace _2k2mv
                     }
 
                     tilesets.Add(tileset);
+                    squareflagList.Add(squareflags);
                 }
 
                 string tilesetPath = Path.Combine(outputPath, "data", "Tilesets.json");
+                string squarePath = Path.Combine(outputPath, "data", "Square Tiles List.json");
 
                 if (File.Exists(tilesetPath)) //if "Tilesets.json" already exists, it will be updated instead of overwritten
                 {
@@ -612,6 +640,9 @@ namespace _2k2mv
 
                 jsonData = js.Serialize(tilesets).Replace("[null,{", "[\nnull,\n{").Replace("},{", "},\n{").Replace("]}]", "]}\n]").Replace("\\u0027", "'");
                 File.WriteAllText(tilesetPath, jsonData);
+
+                jsonData = js.Serialize(squareflagList).Replace("[null,{", "[\nnull,\n{").Replace("},{", "},\n{").Replace("]}]", "]}\n]").Replace("\\u0027", "'");
+                File.WriteAllText(squarePath, jsonData);
 
                 if (missingChipsetImages != "") //write the list of missing chipset images to text file
                 {
@@ -740,6 +771,11 @@ namespace _2k2mv
                 MessageBox.Show("Tilesets.json in output folder not found. Convert tileset data first.");
                 return;
             }
+            if (!File.Exists(Path.Combine(outputPath, "data", "Square Tiles List.json")))
+            {
+                MessageBox.Show("Square Tiles List.json in output folder not found. Convert tileset data first.");
+                return;
+            }
             Task.Factory.StartNew(() =>
             {
                 label_mconv_status.Invoke(new Action(() => label_mconv_status.Text = "Working..."));
@@ -762,11 +798,14 @@ namespace _2k2mv
 
                 string mapFileName = "";
                 string mapFileName2k = "";
+                string mapIdString;
+                bool overlimit;
+                string dataDir = "data";
                 string nodeJsonData = "";
                 string mapJsonData = "";
-                List<int> lowerLayer;
+                List<int> passabilityLayer;
                 List<int> upperLayer;
-                List<int> autoTileLayer;
+                List<int> lowerLayer;
                 List<int> lower_layer;
                 List<int> upper_layer;
                 string imagePath;
@@ -777,6 +816,8 @@ namespace _2k2mv
                 int EventPosEnd;
                 List<MapTreeNode> mapTreeNodes = new List<MapTreeNode>();
                 mapTreeNodes.Add(null);
+                List<MapTreeNode> mapTreeNodesOverlimit = new List<MapTreeNode>();
+                mapTreeNodesOverlimit.Add(null);
                 int trimLength;
 
                 List<MapName> mapNames = new List<MapName>();
@@ -789,10 +830,16 @@ namespace _2k2mv
 
                 List<Tileset> tilesets;
                 Tileset tileset;
-                int tile;
+                int tileL;
+                int tileU;
                 tilesets = js.Deserialize<List<Tileset>>(File.ReadAllText(Path.Combine(outputPath, "data", "Tilesets.json")));
-                List<int> subtiles = new List<int> { 33, 43, 45, 34, 20, 36, 21, 22 };//list of passable subtiles for "square" passability autotiles
-                int flags = 0;
+                List<int> subtiles = new List<int> { 33, 43, 45, 34, 20, 36, 21, 22, 23, 35, 37, 42, 46, 47 };//list of passable subtiles for "square" passability autotiles
+                int flagsL = 0;
+                int flagsU = 0;
+
+                List<Tileset> squareflagList = js.Deserialize<List<Tileset>>(File.ReadAllText(Path.Combine(outputPath, "data", "Square Tiles List.json")));
+                Tileset squareflags;
+                bool isSquare;
 
                 List<int> autotilesSubstitutionList = new List<int> { };//list of problematic autotiles to substitute with D tiles
                 List <SubstitutionList> substitutionList = new List<SubstitutionList>();
@@ -817,9 +864,18 @@ namespace _2k2mv
                 foreach (var mapInfo in mapNodesXML.Elements("MapInfo"))
                 {
                     MapTreeNode mapTreeNode = new MapTreeNode();
-                    mapFileName = "Map" + mapInfo.Attribute("id").Value.Substring(1);
-                    mapFileName2k = "Map" + mapInfo.Attribute("id").Value;
-                    mapTreeNode.id = int.Parse(mapInfo.Attribute("id").Value);
+                    mapIdString = mapInfo.Attribute("id").Value;
+                    if (mapIdString.Substring(0,1) == "0")
+                    {
+                        overlimit = false;
+                    }
+                    else
+                    {
+                        overlimit = true;
+                    }
+                    mapFileName = "Map" + mapIdString.Substring(1);
+                    mapFileName2k = "Map" + mapIdString;
+                    mapTreeNode.id = int.Parse(mapIdString);
                     if (mapInfo.Element("expanded_node").Value == "F") { mapTreeNode.expanded = false; } else { mapTreeNode.expanded = true; }
                     mapTreeNode.name = mapInfo.Element("name").Value;
                     mapTreeNode.order = treeOrder.IndexOf(mapTreeNode.id);
@@ -827,9 +883,40 @@ namespace _2k2mv
                     mapTreeNode.scrollX = double.Parse(mapInfo.Element("scrollbar_x").Value);
                     mapTreeNode.scrollY = double.Parse(mapInfo.Element("scrollbar_y").Value);
 
-                    if (mapFileName != "Map000")
+                    if (overlimit)
+                    {
+                        mapTreeNode.parentId = 0;
+                        mapTreeNode.expanded = false;
+                        dataDir = "data2";
+                        if (mapTreeNode.id == 1000)
+                        {
+                            mapTreeNode.id = 999;
+                            mapTreeNode.name = "999";
+                            mapFileName = "Map999";
+                            mapTreeNode.order = 1;
+                        }
+                        else
+                        {
+                            mapTreeNode.id = mapTreeNode.id - 1000;
+                            mapTreeNode.order = mapTreeNode.id + 1;
+                        }
+                        if (!Directory.Exists(Path.Combine(outputPath, "data2")))
+                        {
+                            Directory.CreateDirectory(Path.Combine(outputPath, "data2"));
+                        }
+
+                        mapTreeNodesOverlimit.Add(mapTreeNode);
+                    }
+                    else if (mapIdString != "0000")
                     {
                         mapTreeNodes.Add(mapTreeNode);
+                        dataDir = "data";
+                    }
+
+                    if (mapIdString != "0000" && File.Exists(Path.Combine(inputPath, mapFileName2k + ".emu")))
+                    {
+
+                        
 
                         XDocument mapXML = null;
                         using (StreamReader oReader = new StreamReader(Path.Combine(inputPath, mapFileName2k + ".emu"), Encoding.GetEncoding("shift_jis")))
@@ -920,74 +1007,67 @@ namespace _2k2mv
                         lower_layer = mapDataXML.Element("lower_layer").Value.Split(' ').ToList().Select(s => int.Parse(s)).ToList();
                         upper_layer = mapDataXML.Element("upper_layer").Value.Split(' ').ToList().Select(s => int.Parse(s)).ToList();
                         upperLayer = new List<int>(new int[upper_layer.Count]);
+                        passabilityLayer = new List<int>(new int[lower_layer.Count]);
                         lowerLayer = new List<int>(new int[lower_layer.Count]);
-                        autoTileLayer = new List<int>(new int[lower_layer.Count]);
                         
                         //tileset = tilesets[map.tilesetId];
                         tileset = tilesets.Where(x => (x != null) && (x.id == map.tilesetId)).SingleOrDefault();
+                        squareflags = squareflagList.Where(x => (x != null) && (x.id == map.tilesetId)).SingleOrDefault();
 
                         for (int n = 0; n <= lower_layer.Count - 1; n++)
                         {
-                            tile = convertTileId(lower_layer[n]);
-                            if (tileset.flags.Length > 1) { flags = tileset.flags[tile]; } else { flags = 0; }
+                            tileU = convertTileId(upper_layer[n]);
+                            if (tileset.flags.Length > 1) { flagsU = tileset.flags[tileU]; } else { flagsU = 0; }
+                            upperLayer[n] = tileU;
 
-                            if (tile >= 2048)//split autotiles and normal lower layer tiles
-                            {
-                                autoTileLayer[n] = tile;
-                                if ((flags & 16) == 16)//for star autotiles put passable transparent tile in third layer
-                                {
-                                    if((flags & 15) == 15)//"square" passability autotiles are 4-way impassable
-                                    {
-                                        if (subtiles.Contains((tile - 2048) % 48))//only subtiles from list are made passable
-                                        {
-                                            lowerLayer[n] = 752;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        lowerLayer[n] = 752 + (flags & 15);
-                                    }
-                                    
-                                }
-                                tileIndex = (tile - 2816) / 48;
-                                subtile = (tile - 2816) % 48;
-                                if (tile >= 2816 && autotilesSubstitutionList.Contains(map.tilesetId * 12 + tileIndex))//substitute problematic autotiles with D tiles
-                                {
-                                    if (subtilesSubstitutionList.Contains(subtile))
-                                    {
-                                        subtileIndex = subtilesSubstitutionList.IndexOf(subtile);
-                                        autoTileLayer[n] = subtileIndex + 5 * ((subtileIndex * 2 + 1) / 6) + 3 * ((tileIndex + 1) / 2) + 29 * (tileIndex / 2) + 1 + 512;                                 
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                lowerLayer[n] = tile;
-                                if ((flags & 16) == 16 && (flags & 15) != 15)//for star lower layer tiles put passable transparent tile in first layer
-                                {
-                                    autoTileLayer[n] = 752 + (flags & 15);
-                                }
-                            }
-                            map.data[n] = autoTileLayer[n];//autotiles go in first layer (ground layer)
-                            map.data[n + map.width * map.height * 2] = lowerLayer[n]; //normal lower layer tiles go in third layer (first design layer)
-                        }
+                            tileL = convertTileId(lower_layer[n]);
+                            if (tileset.flags.Length > 1) { flagsL = tileset.flags[tileL]; } else { flagsL = 0; }
+                            lowerLayer[n] = tileL;
 
-                        for (int n = 0; n <= upper_layer.Count - 1; n++)
-                        {
-                            tile = convertTileId(upper_layer[n]);
-                            upperLayer[n] = tile;
-                            if (tileset.flags.Length > 1) { flags = tileset.flags[tile]; } else { flags = 0; }
-                            if ((flags & 16) == 16 && (flags & 15) != 15)//for star upper layer tiles put passable transparent tile in unoccupied layer
+                            if (squareflags.flags.Length > 1) { isSquare = squareflags.flags[tileL] == 32; } else { isSquare = false; }
+
+                            tileIndex = (tileL - 2816) / 48;
+                            subtile = (tileL - 2816) % 48;
+                            if (tileL >= 2816 && autotilesSubstitutionList.Contains(map.tilesetId * 12 + tileIndex))//substitute problematic autotiles with D tiles
                             {
-                                if(lowerLayer[n] == 0)
+                                if (subtilesSubstitutionList.Contains(subtile))
                                 {
-                                    lowerLayer[n] = 752 + (flags & 15);
-                                }
-                                else
-                                {
-                                    autoTileLayer[n] = 752 + (flags & 15);
+                                    subtileIndex = subtilesSubstitutionList.IndexOf(subtile);
+                                    lowerLayer[n] = subtileIndex + 5 * ((subtileIndex * 2 + 1) / 6) + 3 * ((tileIndex + 1) / 2) + 29 * (tileIndex / 2) + 1 + 512;
                                 }
                             }
+
+                            //workaround for star and square tiles passability by adding passable tile in third layer
+                            if (isSquare)//square lower
+                            {
+                                if (subtiles.Contains((tileL - 2048) % 48))//only subtiles from list are made passable
+                                {
+                                    if ((flagsU & 16) == 16 && tileU != 321)//square lower, star upper
+                                    {
+                                        passabilityLayer[n] = 752 + (flagsU & 15);
+                                    }
+                                    else //square lower, non-star upper
+                                    {
+                                        passabilityLayer[n] = 752;
+                                    }
+                                }
+                            }
+                            else if ((flagsL & 16) == 16 && (flagsU & 16) == 16 && tileU != 321)//star lower, star upper
+                            {
+                                passabilityLayer[n] = 752 + ((flagsU | flagsL) & 15);
+                            }
+                            else if ((flagsL & 16) == 16)//star lower, non-star upper
+                            {
+                                passabilityLayer[n] = 752 + (flagsL & 15);
+                            }
+                            else if ((flagsU & 16) == 16 && tileU != 321)//non-star lower, star upper
+                            {
+                                passabilityLayer[n] = 752 + ((flagsU | flagsL) & 15);
+                            }
+
+
+                            map.data[n] = lowerLayer[n];//lower layer tiles go in first layer (ground layer)
+                            map.data[n + map.width * map.height * 2] = passabilityLayer[n]; //passability workaround tiles go in third layer (first design layer)
                             map.data[n + map.width * map.height * 3] = upperLayer[n];//upper layer tiles go in fourth layer (second design layer)
                         }
                         //End of map tile data processing
@@ -1000,12 +1080,12 @@ namespace _2k2mv
                         }
 
                         //if set in settings, update only map tile data if map already exists in output directory
-                        if (File.Exists(Path.Combine(outputPath, "data", mapFileName + ".json")) && settings.updateOnlyTileDataIfOutputMapExists)
+                        if (File.Exists(Path.Combine(outputPath, dataDir, mapFileName + ".json")) && settings.updateOnlyTileDataIfOutputMapExists)
                         {
                             mapTemp.data = new int[map.width * map.height * 6];
                             map.bgm = new BGX { };
                             map.bgs = new BGX { };
-                            mapJsonDataTemp = File.ReadAllText(Path.Combine(outputPath, "data", mapFileName + ".json")).Replace("encounterList\":[]", "encounterList\":\"[]\"");
+                            mapJsonDataTemp = File.ReadAllText(Path.Combine(outputPath, dataDir, mapFileName + ".json")).Replace("encounterList\":[]", "encounterList\":\"[]\"");
                             if (mapJsonDataTemp.IndexOf("events\":[\n]") > 0)
                             {
                                 mapJsonDataTemp = mapJsonDataTemp.Replace("events\":[\n]", "events\":\"[]\"");
@@ -1014,7 +1094,7 @@ namespace _2k2mv
                             else
                             {
                                 eventsPos = mapJsonDataTemp.IndexOf("events\":[") + 9;
-                                EventPosEnd = mapJsonDataTemp.LastIndexOf("\"y\":");
+                                EventPosEnd = Math.Max(mapJsonDataTemp.LastIndexOf("\"y\":"), mapJsonDataTemp.LastIndexOf("null"));
                                 EventPosEnd = mapJsonDataTemp.IndexOf("]", EventPosEnd);
                                 eventsTemp = "\n\"events\":" + mapJsonDataTemp.Substring(eventsPos - 1, EventPosEnd - eventsPos + 2);
                                 mapJsonDataTemp = mapJsonDataTemp.Substring(0, eventsPos - 1) + "\"[]\"" + mapJsonDataTemp.Substring(EventPosEnd + 1);
@@ -1032,8 +1112,9 @@ namespace _2k2mv
                         mapJsonData = js.Serialize(map);
                         mapJsonData = mapJsonData.Replace("{\"autoplayBgm", "{\n\"autoplayBgm").Replace("encounterList\":\"[]\"", "encounterList\":[]").Replace(",\"data", ",\n\"data")
                             .Replace("\"events\":\"[]\"", eventsTemp).Replace("\\u0027", "'").TrimEnd('}') + "\n}";
-                        File.WriteAllText(Path.Combine(outputPath, "data", mapFileName + ".json"), mapJsonData);
-                        if (mapJsonData.IndexOf("autoplayBgm", mapJsonData.IndexOf("\"events\":")) > 0) { MessageBox.Show(mapTreeNode.id.ToString()); }
+                        File.WriteAllText(Path.Combine(outputPath, dataDir, mapFileName + ".json"), mapJsonData);
+                        //if (mapJsonData.IndexOf("autoplayBgm", mapJsonData.IndexOf("\"events\":")) > 0) { MessageBox.Show(mapTreeNode.id.ToString()); }
+                        
                         mapJsonData = "";
                         eventsTemp = "\n\"events\":[\n]";
                     }
@@ -1044,7 +1125,13 @@ namespace _2k2mv
                     nodeJsonData = js.Serialize(mapTreeNodes).Replace("[null,{", "[\nnull,\n{").Replace("},{", "},\n{").Replace("}]", "}\n]").Replace("\\u0027", "'");
                     File.WriteAllText(Path.Combine(outputPath, "data", "MapInfos.json"), nodeJsonData);
                 }
-                
+
+                if (mapTreeNodesOverlimit.Count > 1 && !File.Exists(Path.Combine(outputPath, "data2", "MapInfos.json")) || !settings.updateOnlyTileDataIfOutputMapExists)//do not overwrite existing "MapInfos.json" is checkbox is set
+                {
+                    nodeJsonData = js.Serialize(mapTreeNodesOverlimit).Replace("[null,{", "[\nnull,\n{").Replace("},{", "},\n{").Replace("}]", "}\n]").Replace("\\u0027", "'");
+                    File.WriteAllText(Path.Combine(outputPath, "data2", "MapInfos.json"), nodeJsonData);
+                }
+
                 label_mconv_status.Invoke(new Action(() => label_mconv_status.Text = "Done"));
                 label_mconv_status.Invoke(new Action(() => label_mconv_status.ForeColor = System.Drawing.Color.Green));
                 enableButtons();
